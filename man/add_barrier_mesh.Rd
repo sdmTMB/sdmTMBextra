@@ -45,7 +45,6 @@ Transform a mesh object into a mesh with correlation barriers
 if (require("sf", quietly = TRUE) &&
   require("ggplot2", quietly = TRUE) &&
   require("dplyr", quietly = TRUE) &&
-  require("INLA", quietly = TRUE) &&
   require("sdmTMB", quietly = TRUE) &&
   require("rnaturalearth", quietly = TRUE)) {
 

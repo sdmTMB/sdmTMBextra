@@ -34,7 +34,7 @@ sample_mle_mcmc(
 
 \item{print_stan_model}{Print the Stan model from MCMC residuals?}
 
-\item{stan_args}{A list of arguments that will be passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
+\item{stan_args}{A list of arguments that will be passed to \code{\link[rstan:sampling]{rstan::sampling()}}.}
 
 \item{nsim}{Number of MCMC samples to return.}
 

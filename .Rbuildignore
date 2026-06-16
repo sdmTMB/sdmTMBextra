@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^\.github$
 ^data-raw$
+^\.positai$
+^\.claude$
