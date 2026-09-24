@@ -57,18 +57,10 @@ predict_mle_mcmc <- function(
 
   if (print_stan_model) print(samp)
 
-  obj <- object$tmb_obj
-  random <- unique(names(obj$env$par[obj$env$random]))
-  # get (logical) non random effects indices:
-  pl <- as.list(object$sd_report, "Estimate")
-  fixed <- !(names(pl) %in% random)
-  # fix non-random parameters to their estimated values:
-  map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
-  # construct corresponding new function object:
-  obj <- TMB::MakeADFun(obj$env$data, pl, map = map, DLL = "sdmTMB")
+  mle <- mle_mcmc_object(object)
   obj_mle <- object
-  obj_mle$tmb_obj <- obj
-  obj_mle$tmb_map <- map
+  obj_mle$tmb_obj <- mle$obj
+  obj_mle$tmb_map <- mle$map
   if (isTRUE(object$family$delta) && identical(model, c(1, 2))) {
     cli_inform(paste0("Predicting for delta model ", model[[1]], ". Use the `model` argument to select the other component."))
   }
@@ -89,9 +81,6 @@ sample_mle_mcmc <- function(
     mcmc_iter = 500,
     mcmc_chains = 1,
     stan_args = NULL) {
-  obj <- object$tmb_obj
-  random <- unique(names(obj$env$par[obj$env$random]))
-
   if (isTRUE(object$reml)) {
     msg <- c(
       "Please refit your model with `reml = FALSE` to use MCMC-MLE residuals.",
@@ -100,18 +89,25 @@ sample_mle_mcmc <- function(
     cli::cli_abort(msg)
   }
 
-  # get (logical) non random effects indices:
-  pl <- as.list(object$sd_report, "Estimate")
-  fixed <- !(names(pl) %in% random)
-
-  # fix non-random parameters to their estimated values:
-  map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
-
-  # construct corresponding new function object:
-  obj <- TMB::MakeADFun(obj$env$data, pl, map = map, DLL = "sdmTMB")
+  obj <- mle_mcmc_object(object)$obj
 
   # run MCMC to get posterior sample of random effects given data:
   args <- list(obj = obj, chains = mcmc_chains, iter = mcmc_iter, warmup = mcmc_warmup)
   args <- c(args, stan_args)
   do.call(tmbstan::tmbstan, args)
+}
+
+mle_mcmc_object <- function(object) {
+  obj <- object$tmb_obj
+  random <- unique(names(obj$env$par[obj$env$random]))
+  pl <- as.list(object$sd_report, "Estimate")
+  fixed <- !(names(pl) %in% random)
+  map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
+  backend <- if (is.null(object$backend)) "tmb" else object$backend
+  list(
+    obj = sdmTMB:::make_sdmTMB_adfun(
+      data = object$tmb_data, parameters = pl, map = map, backend = backend
+    ),
+    map = map
+  )
 }
