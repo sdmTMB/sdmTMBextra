@@ -104,10 +104,24 @@ mle_mcmc_object <- function(object) {
   fixed <- !(names(pl) %in% random)
   map <- lapply(pl[fixed], function(x) factor(rep(NA, length(x))))
   backend <- if (is.null(object$backend)) "tmb" else object$backend
-  list(
-    obj = sdmTMB:::make_sdmTMB_adfun(
+  make_adfun <- get0(
+    "make_sdmTMB_adfun",
+    envir = asNamespace("sdmTMB"),
+    mode = "function",
+    inherits = FALSE
+  )
+  if (identical(backend, "rtmb") && !is.null(make_adfun)) {
+    obj <- make_adfun(
       data = object$tmb_data, parameters = pl, map = map, backend = backend
-    ),
+    )
+  } else {
+    obj <- TMB::MakeADFun(
+      data = object$tmb_obj$env$data,
+      parameters = pl, map = map, DLL = "sdmTMB"
+    )
+  }
+  list(
+    obj = obj,
     map = map
   )
 }
